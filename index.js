@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 const connectDB = require("./db");
 const userRoutes = require("./routes/users");
 const exercicioRoutes = require("./routes/exercicios");
@@ -9,6 +10,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Middlewares
+app.use(cors());
 app.use(express.json());
 
 // Usando as rotas
