@@ -65,5 +65,46 @@ router.patch("/:userId/treinos", async (req, res) => {
   }
 });
 
+// Rota PATCH - Editar um treino específico de um usuário
+router.patch("/:userId/treinos/:treinoId", async (req, res) => {
+  try {
+    const { userId, treinoId } = req.params;
+    const { nome, series } = req.body;
+
+    // Buscar o usuário pelo ID
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
+
+    // Encontrar o índice do treino no array
+    const treinoIndex = user.treinos.findIndex(
+      treino => treino._id.toString() === treinoId
+    );
+
+    if (treinoIndex === -1) {
+      return res.status(404).json({ error: "Treino não encontrado" });
+    }
+
+    // Atualizar o treino
+    if (nome) {
+      user.treinos[treinoIndex].nome = nome;
+    }
+    if (series) {
+      user.treinos[treinoIndex].series = series;
+    }
+
+    await user.save();
+
+    // Buscar o usuário atualizado com os treinos populados
+    const updatedUser = await User.findById(userId).populate({
+      path: "treinos.series.exercicio",
+      model: "Exercicio"
+    });
+
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao editar treino" });
+    console.log(error);
+  }
+});
 
 module.exports = router;
