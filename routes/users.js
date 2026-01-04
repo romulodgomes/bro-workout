@@ -28,6 +28,23 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Rota GET - Buscar treinos de um usuário específico
+router.get("/:userId/treinos", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).populate({
+      path: "treinos.series.exercicio",
+      model: "Exercicio"
+    });
+    
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
+    
+    res.json(user.treinos || []);
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao buscar treinos do usuário" });
+  }
+});
+
 router.patch("/:userId/treinos", async (req, res) => {
   try {
     const { userId } = req.params;
