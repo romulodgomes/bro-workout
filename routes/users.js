@@ -107,4 +107,35 @@ router.patch("/:userId/treinos/:treinoId", async (req, res) => {
   }
 });
 
+// Rota DELETE - Excluir um treino específico de um usuário
+router.delete("/:userId/treinos/:treinoId", async (req, res) => {
+  try {
+    const { userId, treinoId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
+
+    const treinoIndex = user.treinos.findIndex(
+      treino => treino._id.toString() === treinoId
+    );
+
+    if (treinoIndex === -1) {
+      return res.status(404).json({ error: "Treino não encontrado" });
+    }
+
+    user.treinos.splice(treinoIndex, 1);
+    await user.save();
+
+    const updatedUser = await User.findById(userId).populate({
+      path: "treinos.series.exercicio",
+      model: "Exercicio"
+    });
+
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao excluir treino" });
+    console.log(error);
+  }
+});
+
 module.exports = router;
