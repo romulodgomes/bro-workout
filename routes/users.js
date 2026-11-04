@@ -2,6 +2,40 @@ const express = require("express");
 const User = require("../models/User");
 const router = express.Router();
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validateCreateUser({ nome, email, password }) {
+  const errors = [];
+
+  if (nome === undefined || nome === null) {
+    errors.push("Nome é obrigatório");
+  } else if (typeof nome !== "string") {
+    errors.push("Nome deve ser uma string");
+  } else if (nome.trim() === "") {
+    errors.push("Nome não pode ser vazio");
+  }
+
+  if (email === undefined || email === null) {
+    errors.push("Email é obrigatório");
+  } else if (typeof email !== "string") {
+    errors.push("Email deve ser uma string");
+  } else if (email.trim() === "") {
+    errors.push("Email não pode ser vazio");
+  } else if (!EMAIL_REGEX.test(email.trim())) {
+    errors.push("Email inválido");
+  }
+
+  if (password === undefined || password === null) {
+    errors.push("Senha é obrigatória");
+  } else if (typeof password !== "string") {
+    errors.push("Senha deve ser uma string");
+  } else if (password.trim() === "") {
+    errors.push("Senha não pode ser vazia");
+  }
+
+  return errors;
+}
+
 // Rota GET - Listar usuários
 router.get("/", async (req, res) => {
   try {
@@ -19,10 +53,27 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const { nome, email, password } = req.body;
-    const newUser = new User({ nome, email, password });
+    const validationErrors = validateCreateUser({ nome, email, password });
+
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ error: validationErrors[0], errors: validationErrors });
+    }
+
+    const newUser = new User({
+      nome: nome.trim(),
+      email: email.trim(),
+      password: password.trim(),
+    });
     await newUser.save();
     res.status(201).json(newUser);
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ error: "Email já cadastrado" });
+    }
+    if (error.name === "ValidationError") {
+      const message = Object.values(error.errors).map((e) => e.message)[0] || "Dados inválidos";
+      return res.status(400).json({ error: message });
+    }
     res.status(500).json({ error: "Erro ao criar usuário" });
     console.log(error);
   }

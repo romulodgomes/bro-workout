@@ -104,7 +104,6 @@ const spec = {
           _id: { type: "string", example: "664f1a2b3c4d5e6f7a8b9c0f" },
           nome: { type: "string", example: "Ana Silva" },
           email: { type: "string", example: "ana@email.com" },
-          password: { type: "string", example: "senha123" },
           treinos: {
             type: "array",
             items: { $ref: "#/components/schemas/Treino" },
@@ -115,11 +114,11 @@ const spec = {
       },
       UserInput: {
         type: "object",
-        required: ["nome", "email"],
+        required: ["nome", "email", "password"],
         properties: {
-          nome: { type: "string", example: "Ana Silva" },
-          email: { type: "string", example: "ana@email.com" },
-          password: { type: "string", example: "senha123" },
+          nome: { type: "string", minLength: 1, example: "Ana Silva" },
+          email: { type: "string", format: "email", example: "ana@email.com" },
+          password: { type: "string", minLength: 1, example: "senha123" },
         },
       },
     },
@@ -200,6 +199,22 @@ const spec = {
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/User" },
+              },
+            },
+          },
+          400: {
+            description: "Dados inválidos (validação de nome, email ou senha)",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          409: {
+            description: "Email já cadastrado",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
               },
             },
           },
